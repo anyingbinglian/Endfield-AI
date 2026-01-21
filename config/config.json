@@ -1,0 +1,20 @@
+{
+  "game": {
+    "window_title": "明日方舟：终末地",
+    "window_class": "",
+    "auto_focus": true
+  },
+  "detection": {
+    "match_threshold": 0.8,
+    "screenshot_interval": 0.5
+  },
+  "action": {
+    "click_delay": 0.1,
+    "key_delay": 0.05
+  },
+  "log": {
+    "level": "INFO",
+    "save_to_file": true
+  }
+}
+
