@@ -1,17 +1,6 @@
-# Endfield-AI 项目依赖
-
-# 图像处理
-opencv-python>=4.8.0
-numpy>=1.24.0
-Pillow>=10.0.0
-
-# 屏幕捕获和输入控制 (Windows)
-pywin32>=306; sys_platform == 'win32'
 pyautogui>=0.9.54
-
-# 配置管理
-pyyaml>=6.0
-
-# 其他工具
-python-dotenv>=1.0.0
+opencv-python>=4.8.0
+mss>=9.0.0
+pywin32>=306
+numpy>=1.24.0
 
