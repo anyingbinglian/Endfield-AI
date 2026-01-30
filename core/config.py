@@ -24,6 +24,14 @@ class WindowConfig:
     )
 
 
+# 测试窗口配置（用于测试功能）
+TEST_WINDOW_CONFIG = WindowConfig(
+    window_titles=(
+        "记事本",
+    )
+)
+
 # 全局窗口配置实例，供其他模块使用
-WINDOW_CONFIG = WindowConfig()
+# WINDOW_CONFIG = WindowConfig()
+WINDOW_CONFIG = TEST_WINDOW_CONFIG
 

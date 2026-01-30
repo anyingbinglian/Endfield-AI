@@ -44,17 +44,19 @@ class WindowsCapture:
     ReleaseDC = ctypes.windll.user32.ReleaseDC
     GetDeviceCaps = win32print.GetDeviceCaps
 
-    def __init__(self, max_fps: int = 30):
+    def __init__(self, max_fps: int = 30, force_1920x1080: bool = True):
         """初始化 Windows 截图工具。
         
         Args:
             max_fps: 最大截图帧率，默认 30 FPS
+            force_1920x1080: 是否强制限制截图为 1920x1080 分辨率，默认 True
         """
         self.max_fps = max_fps
+        self.force_1920x1080 = force_1920x1080
         self._capture_cache: np.ndarray = np.zeros((1080, 1920, 4), dtype=np.uint8)
         self._capture_cache_lock = threading.Lock()
         self._last_capture_time = 0.0
-        self._fps_timer = time.time()
+        self._fps_timer = 0.0
 
     def _check_shape(self, img: np.ndarray) -> bool:
         """检查截图尺寸是否正确。
@@ -67,16 +69,24 @@ class WindowsCapture:
         """
         if img is None:
             return False
-        # 支持 1920x1080 分辨率（4通道BGRA）
-        if img.shape == (1080, 1920, 4):
-            return True
-        return False
+        # 如果启用了分辨率限制，检查是否为 1920x1080（4通道BGRA）
+        if self.force_1920x1080:
+            if img.shape == (1080, 1920, 4):
+                return True
+            return False
+        else:
+            # 未启用限制时，只要形状有效（3维，最后一维为4）即可
+            if len(img.shape) == 3 and img.shape[2] == 4:
+                return True
+            return False
 
     def _get_capture(self) -> np.ndarray:
         """执行实际的截图操作。
         
         Returns:
-            截图图像数组（BGRA格式，形状为 (1080, 1920, 4)）
+            截图图像数组（BGRA格式）
+            如果 force_1920x1080 为 True，形状为 (1080, 1920, 4)
+            否则使用实际窗口尺寸
             
         Raises:
             CaptureError: 如果截图失败
@@ -93,11 +103,17 @@ class WindowsCapture:
         self.GetClientRect(handle, ctypes.byref(rect))
         width, height = rect.right, rect.bottom
 
-        # 处理缩放情况（如果检测到缩放，强制使用 1920x1080）
-        if height in [int(1080 / scale) for scale in [0.75, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]]:
-            logger.debug(f"检测到窗口缩放，使用标准分辨率 1920x1080")
-            width = 1920
-            height = 1080
+        # 如果启用了分辨率限制，强制使用 1920x1080
+        if self.force_1920x1080:
+            # 处理缩放情况（如果检测到缩放，强制使用 1920x1080）
+            if height in [int(1080 / scale) for scale in [0.75, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]]:
+                logger.debug(f"检测到窗口缩放，使用标准分辨率 1920x1080")
+                width = 1920
+                height = 1080
+            else:
+                # 直接强制使用 1920x1080
+                width = 1920
+                height = 1080
 
         # 开始截图
         dc = self.GetDC(handle)
@@ -136,7 +152,9 @@ class WindowsCapture:
             recapture_limit: 截图缓存时间限制（秒），默认 0.0（不使用缓存）
             
         Returns:
-            截图图像数组（BGRA格式，形状为 (1080, 1920, 4)）
+            截图图像数组（BGRA格式）
+            如果 force_1920x1080 为 True，形状为 (1080, 1920, 4)
+            否则使用实际窗口尺寸
             
         Raises:
             CaptureError: 如果截图失败

@@ -27,7 +27,7 @@ from interaction.constants import (
 )
 from interaction.decorators import before_operation
 from interaction.image_matcher import crop_image, match_image
-from interaction.input_controller import InteractionNormal
+from interaction.input_controller_front import InteractionFront
 
 logger = get_logger(__name__)
 
@@ -36,19 +36,30 @@ class InteractionCore:
     """交互核心类。
     
     整合截图、图像识别、鼠标键盘操作等功能，提供统一的交互接口。
-    默认支持 1920x1080 分辨率。
+    默认支持 1920x1080 分辨率，可通过 force_1920x1080 参数控制。
     """
 
     # 截图缓存最大间隔（秒）
     RECAPTURE_LIMIT = 0.5
 
-    def __init__(self):
-        """初始化交互核心类。"""
+    def __init__(self, force_1920x1080: bool = True):
+        """初始化交互核心类。
+        
+        Args:
+            force_1920x1080: 是否强制限制截图为 1920x1080 分辨率，默认 True
+        """
         logger.info("InteractionCore 初始化")
         
+        # 配置（需要在初始化组件之前设置）
+        self._wheel_delta = 120
+        self._default_delay_time = 0.05
+        self._debug_mode = False
+        self._is_borderless_window = False
+        self._force_1920x1080 = force_1920x1080
+        
         # 初始化组件
-        self._screenshot_capture = WindowsCapture(max_fps=30)
-        self._input_controller = InteractionNormal()
+        self._screenshot_capture = WindowsCapture(max_fps=30, force_1920x1080=force_1920x1080)
+        self._input_controller = InteractionFront(is_borderless_window=self._is_borderless_window)
         
         # 线程安全锁
         self._operation_lock = threading.Lock()
@@ -56,12 +67,6 @@ class InteractionCore:
         # 按键状态跟踪
         self._key_status: dict[str, bool] = {}
         self._key_freeze: dict[str, bool] = {}
-        
-        # 配置
-        self._wheel_delta = 120
-        self._default_delay_time = 0.05
-        self._debug_mode = False
-        self._is_borderless_window = False
 
     # ========== 截图功能 ==========
 

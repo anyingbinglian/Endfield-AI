@@ -43,7 +43,7 @@ def before_operation(print_log: bool = True):
                 frame = inspect.currentframe()
                 if frame and frame.f_back:
                     func_name = inspect.getframeinfo(frame.f_back)[2]
-                    logger.trace(
+                    logger.debug(
                         f"操作: {func.__name__} | 参数: {args[1:]} | {kwargs} | 调用函数: {func_name}"
                     )
             
